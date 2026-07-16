@@ -19,7 +19,11 @@ export function redactToken(token) {
 
 export class SessionNotFound extends Error {
   constructor() {
-    super("unknown or deleted session token");
+    super(
+      "unknown or deleted session token — the session may have been deleted, or server storage " +
+        "may have restarted (ephemeral backend). Offer the user a new session via start_session " +
+        "or continue in local mode; never fabricate restored state."
+    );
   }
 }
 
