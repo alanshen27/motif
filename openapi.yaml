@@ -8,7 +8,7 @@ info:
     diff when stale.
   version: 0.1.0
 servers:
-  - url: https://REPLACE-WITH-YOUR-DEPLOYMENT
+  - url: https://https://motif-fsqa.vercel.app/
 paths:
   /actions/start_session:
     post:

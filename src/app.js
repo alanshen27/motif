@@ -81,6 +81,14 @@ export function createApp({ store, dataRoot }) {
     }
   };
 
+  app.get("/", (_req, res) =>
+    res.json({
+      service: "motif-action-server",
+      status: "ok",
+      docs: "POST /actions/* per openapi.yaml; GET /healthz for liveness",
+    })
+  );
+
   app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
   // ------------------------------------------------------------ sessions
