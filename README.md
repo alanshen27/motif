@@ -31,10 +31,50 @@ export SUPABASE_SERVICE_ROLE_KEY="<service-role-key>"   # server-side only; neve
 npm start
 ```
 
+`npm start` loads `server/.env` automatically if present (Node `--env-file-if-exists`).
+
 - **Debug UI:** http://localhost:8787/debug — lists every session (manifest,
   canonical state, event log, artifacts) and the action log. Local debugging
   only; it has no auth. Disable with `MOTIF_DEBUG_UI=0` before deploying.
 - **Port:** override with `PORT`. File-backend data dir: `MOTIF_DATA_DIR`.
+
+## Deploy (Vercel)
+
+The repo is Vercel-ready: `api/index.js` exports the Express app as a
+serverless handler and `vercel.json` rewrites every route to it.
+
+1. `vercel` (or import the repo in the Vercel dashboard; root = this folder).
+2. Set env vars in the project settings: `SUPABASE_URL` and
+   `SUPABASE_SERVICE_ROLE_KEY` (the long `service_role` JWT from
+   Supabase → Settings → API — **not** a URL). Optionally
+   `MOTIF_INSPO_PROVIDER` and provider credentials.
+3. Without Supabase env the deployment still boots, but falls back to an
+   **ephemeral** file store in `/tmp` (fine for demos; sessions vanish on
+   cold starts).
+
+The debug UI is disabled by default on Vercel (`MOTIF_DEBUG_UI` defaults to
+`0` in the serverless entry); it lists all sessions without auth, so leave it
+off in public deployments.
+
+## Inspiration provider (optional)
+
+`POST /actions/search_for_inspo` is a secondary search path; ChatGPT built-in
+web search remains the default. Select a provider with
+`MOTIF_INSPO_PROVIDER`; unset (or on any provider failure) the Action returns
+`available: false` with fallback guidance instead of an error.
+
+**`MOTIF_INSPO_PROVIDER=arena`** — Are.na adapter (community-curated design
+boards; sanctioned API). Anonymous mode searches a small allowlist of public
+design channels (override with `ARENA_CHANNELS` or per-request
+`source_filters`); setting `ARENA_ACCESS_TOKEN` (premium) upgrades to Are.na's
+real v3 full-text search. Best for mood/editorial/typography references, not
+UI-shot galleries.
+
+**`MOTIF_INSPO_PROVIDER=dribbble`** — compliant Dribbble adapter. Dribbble's
+v2 API has no public search and its terms prohibit scraping, so this searches
+the *authenticated user's own shots* via OAuth. Set `DRIBBBLE_ACCESS_TOKEN`
+(create an app at https://dribbble.com/account/applications). Results are
+normalized source-linked references; image bytes are never stored.
 
 ## Test
 
@@ -65,16 +105,25 @@ Key behaviors the GPT relies on:
 - `search_session_memory` is exact + tokenized + field-aware text search over
   `events.jsonl` (PRD §16.2), returning excerpts with relevance explanations.
 
-## Storage layout
+## Storage model
+
+Both backends implement the same event-sourced model: a session row/manifest
+holding the revision counter and compact canonical state (brief, banned
+patterns, pinned ref IDs, current prototype), an append-only event log, and an
+artifacts area for prototype HTML. Mutations claim `revision + 1` atomically —
+in Supabase via a conditional `UPDATE … WHERE revision = current` plus a
+`(session_id, revision)` primary key on `events`; on disk via synchronous
+writes in a single process. Raw bearer tokens are never persisted, only their
+SHA-256 hashes.
 
 ```text
-data/
-  token_index.json        # sha256(token) -> session id
-  action_log.jsonl        # per-action trace (name, latency, session id — never raw tokens)
-  sessions/<id>/
-    manifest.json         # mode, token hash, revision, parent, canonical state
-    events.jsonl          # append-only event log
-    artifacts/            # stored prototype HTML
+Supabase                          Files (local dev)
+--------                          -----------------
+sessions   (1 row per session)    data/sessions/<id>/manifest.json
+events     (PK session, revision) data/sessions/<id>/events.jsonl
+artifacts  (HTML as text rows)    data/sessions/<id>/artifacts/
+action_log                        data/action_log.jsonl
+                                  data/token_index.json
 ```
 
 ## Endpoints

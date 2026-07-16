@@ -37,3 +37,6 @@ export class RevisionConflict extends Error {
     this.eventsSince = eventsSince;
   }
 }
+
+/** An inspiration provider is selected but missing credentials/config. */
+export class ProviderNotConfigured extends Error {}
