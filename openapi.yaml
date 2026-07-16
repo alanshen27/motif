@@ -1,0 +1,334 @@
+openapi: 3.1.0
+info:
+  title: Motif Action API
+  description: >-
+    Persistence, collaboration, and retrieval infrastructure for the Motif
+    design GPT. Sessions are addressed by opaque bearer tokens; mutations use
+    optimistic concurrency via expected_revision and return 409 with a compact
+    diff when stale.
+  version: 0.1.0
+servers:
+  - url: https://REPLACE-WITH-YOUR-DEPLOYMENT
+paths:
+  /actions/start_session:
+    post:
+      operationId: start_session
+      summary: Create a temporary or persistent session. Show the returned token to the user exactly once.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                mode: { type: string, enum: [temporary, persistent], default: persistent }
+                label: { type: string, maxLength: 200 }
+                retention_days: { type: integer, minimum: 1, maximum: 365 }
+      responses:
+        "200":
+          description: New session token and initial revision.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  session_token: { type: string }
+                  mode: { type: string }
+                  created_at: { type: string }
+                  expires_at: { type: string }
+                  revision: { type: integer }
+                  note: { type: string }
+  /actions/load_session_context:
+    post:
+      operationId: load_session_context
+      summary: Resume a project from a token. Call before making project-specific decisions.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenOnly"
+      responses:
+        "200":
+          description: Compact canonical state (brief, pinned references, feedback, current prototype, recent revisions, event summary).
+        "404": { description: Unknown token. }
+        "410": { description: Session expired. }
+  /actions/update_brief:
+    post:
+      operationId: update_brief
+      summary: Persist the canonical creative brief and optional banned-pattern list.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token, expected_revision, brief]
+              properties:
+                session_token: { type: string }
+                expected_revision: { type: integer }
+                brief: { type: string, maxLength: 20000 }
+                banned_patterns:
+                  type: array
+                  items: { type: string }
+      responses:
+        "200": { description: Event id and new revision. }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /actions/search_for_inspo:
+    post:
+      operationId: search_for_inspo
+      summary: >-
+        Optional provider-specific inspiration search. ChatGPT built-in web
+        search is the default path; if this returns available=false, fall back
+        to built-in search or user uploads.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string, maxLength: 500 }
+                medium: { type: string }
+                style_filters: { type: array, items: { type: string } }
+                source_filters: { type: array, items: { type: string } }
+                limit: { type: integer, minimum: 1, maximum: 25, default: 10 }
+                session_token: { type: string, description: Optional; logs the search to the session. }
+      responses:
+        "200":
+          description: Normalized source-linked references, or available=false with fallback guidance.
+  /actions/store_inspo:
+    post:
+      operationId: store_inspo
+      summary: Persist Inspiration Ledger records (batch supported). Deduplicates by canonical URL, provider ID, then normalized title.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token, expected_revision, references]
+              properties:
+                session_token: { type: string }
+                expected_revision: { type: integer }
+                references:
+                  type: array
+                  minItems: 1
+                  maxItems: 50
+                  items: { $ref: "#/components/schemas/InspoRecord" }
+      responses:
+        "200": { description: Stored reference IDs, deduplication results, new revision. }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /actions/pin_inspiration:
+    post:
+      operationId: pin_inspiration
+      summary: Pin a stored reference by ref_id, or store-and-pin a new reference.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token, expected_revision]
+              properties:
+                session_token: { type: string }
+                expected_revision: { type: integer }
+                ref_id: { type: string }
+                reference: { $ref: "#/components/schemas/InspoRecord" }
+                principles: { type: array, items: { type: string } }
+      responses:
+        "200": { description: Pinned ref_id and new revision. }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /actions/store_feedback:
+    post:
+      operationId: store_feedback
+      summary: Persist global or artifact-specific feedback.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token, expected_revision, text]
+              properties:
+                session_token: { type: string }
+                expected_revision: { type: integer }
+                scope: { type: string, enum: [global, artifact], default: global }
+                artifact_id: { type: string }
+                text: { type: string, maxLength: 10000 }
+                tags: { type: array, items: { type: string } }
+      responses:
+        "200": { description: Feedback ID and new revision. }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /actions/store_prototype:
+    post:
+      operationId: store_prototype
+      summary: Store prototype metadata plus the HTML artifact (inline html or external artifact_ref).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token, expected_revision, direction]
+              properties:
+                session_token: { type: string }
+                expected_revision: { type: integer }
+                direction: { type: string, maxLength: 200 }
+                html: { type: string, maxLength: 600000 }
+                artifact_ref: { type: string }
+                screenshot_refs: { type: array, items: { type: string } }
+                parent_version: { type: string }
+                change_summary: { type: string, maxLength: 2000 }
+                evaluation_summary: { type: string, maxLength: 5000 }
+      responses:
+        "200": { description: Prototype ID, artifact reference, new revision. }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /actions/get_past_prototypes:
+    post:
+      operationId: get_past_prototypes
+      summary: Retrieve compact prototype history (metadata only, no HTML bodies).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token]
+              properties:
+                session_token: { type: string }
+                direction: { type: string }
+                limit: { type: integer, minimum: 1, maximum: 50, default: 10 }
+      responses:
+        "200": { description: Version IDs, timestamps, directions, change summaries, artifact links. }
+  /actions/fork_session:
+    post:
+      operationId: fork_session
+      summary: Fork the session into an independent child token seeded with the parent's canonical state.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token]
+              properties:
+                session_token: { type: string }
+                source_revision: { type: integer }
+                label: { type: string, maxLength: 200 }
+      responses:
+        "200": { description: New child token, parent reference, initial child revision. }
+  /actions/search_session_memory:
+    post:
+      operationId: search_session_memory
+      summary: Text search (exact, tokenized, field-aware) over briefs, feedback, inspiration, and prototype summaries.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token, query]
+              properties:
+                session_token: { type: string }
+                query: { type: string, maxLength: 500 }
+                record_types:
+                  type: array
+                  items: { type: string }
+                  description: "Filter by event type: brief_updated, inspo_stored, inspo_pinned, feedback_stored, prototype_stored, search_logged, session_forked."
+                limit: { type: integer, minimum: 1, maximum: 25, default: 8 }
+      responses:
+        "200": { description: Excerpts with record IDs, types, timestamps, and a relevance explanation. }
+  /actions/get_session_stats:
+    post:
+      operationId: get_session_stats
+      summary: Session statistics (age, revision, event counts, storage). Tokens are never included.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TokenOnly"
+      responses:
+        "200": { description: Stats summary. }
+  /actions/export_session:
+    post:
+      operationId: export_session
+      summary: Export project state and event history as Markdown or JSON.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token]
+              properties:
+                session_token: { type: string }
+                format: { type: string, enum: [markdown, json], default: markdown }
+      responses:
+        "200": { description: Export content. }
+  /actions/delete_session:
+    post:
+      operationId: delete_session
+      summary: Permanently delete a session. Requires confirm=true; confirm with the user first.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [session_token]
+              properties:
+                session_token: { type: string }
+                confirm: { type: boolean, default: false }
+      responses:
+        "200": { description: Deletion result. }
+components:
+  schemas:
+    TokenOnly:
+      type: object
+      required: [session_token]
+      properties:
+        session_token: { type: string }
+    InspoRecord:
+      type: object
+      required: [title, source_url]
+      properties:
+        local_ref_id: { type: string, description: Conversation-local ID like ref-003. }
+        query: { type: string }
+        title: { type: string, maxLength: 500 }
+        creator: { type: string }
+        source_url: { type: string, maxLength: 2000 }
+        preview_url: { type: string, description: Only when storage/use is permitted. }
+        discovery_source:
+          type: string
+          enum: [chatgpt_web_search, action_provider, user_upload, user_url]
+          default: chatgpt_web_search
+        provider_id: { type: string }
+        principles: { type: array, items: { type: string } }
+        status: { type: string, enum: [seen, shortlisted, pinned, rejected, used], default: seen }
+        affects: { type: array, items: { type: string } }
+        tags: { type: array, items: { type: string } }
+        discovered_at: { type: string }
+        notes: { type: string, maxLength: 5000 }
+  responses:
+    Conflict:
+      description: expected_revision is stale. Body contains current_revision and events_since_expected; ask the user whether to merge, retry, or fork.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error: { type: string }
+              message: { type: string }
+              current_revision: { type: integer }
+              events_since_expected:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    revision: { type: integer }
+                    type: { type: string }
+                    id: { type: string }
+                    summary: { type: string }
