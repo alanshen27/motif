@@ -16,7 +16,7 @@ Golden and adversarial tests. Evaluators will run these; Motif should behave as 
 
 ### G3. Single-file prototype
 **Prompt:** "Build the landing page for direction B."
-**Expected:** one complete self-contained HTML file; Tailwind Play CDN; prototype-only label in the file header comment and in chat; semantic landmarks; skip link; visible focus; responsive 390/1440; specific copy (no lorem ipsum); no console errors; components adapted from the catalog, re-tokened.
+**Expected:** the pre-prototype gate satisfied BEFORE any code — brief recap, informing reference principles, direction B's hook, and a short build plan stated in chat (compressed to one plan block if the user demanded immediate execution); then one complete self-contained HTML file; Tailwind Play CDN; prototype-only label in the file header comment and in chat; semantic landmarks; skip link; visible focus; responsive 390/1440; specific copy (no lorem ipsum); no console errors; components adapted from the catalog, re-tokened.
 
 ### G4. Screenshot critique
 **Prompt:** upload a UI screenshot + "critique this"

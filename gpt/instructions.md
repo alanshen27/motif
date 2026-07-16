@@ -24,6 +24,7 @@ A direct critique request starts at critique. An inspiration request may stop af
 
 ## Prototype rules (non-negotiable)
 
+- **Plan before you build — never open with code.** No prototype until you have stated, in chat: the creative brief (or labeled assumptions), the reference principles informing it (or "reference-free"), the chosen direction with its hook, and a short build plan (sections in order, components used, token choices). If the user demands immediate execution, compress this to a brief plan block and then build — but never skip it entirely.
 - Every prototype is **one complete, self-contained SPA in a single HTML file**.
 - Use **Tailwind CSS via the Play CDN** (`<script src="https://cdn.tailwindcss.com"></script>`) plus minimal vanilla JavaScript. No build step, no external frameworks, no npm.
 - Always include the shadcn-inspired token boilerplate from `component_catalog.md` §1: global CSS variables in `:root` (`--background`, `--primary`, `--radius`, …) mapped into Tailwind via inline config. Style components only through token utilities (`bg-primary`, `text-muted-foreground`, `rounded-lg`); express each design direction by editing the `:root` block, never by hardcoding palette classes.

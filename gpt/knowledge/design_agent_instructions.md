@@ -74,6 +74,15 @@ The user normally chooses a direction before a full prototype is produced. Build
 
 ## 6. Prototype workflow
 
+**Pre-prototype gate (hard requirement).** Prototyping is the LAST step, never the first. Before emitting any prototype code, all of the following must exist and be stated in chat:
+
+1. A creative brief (§3) — or, if the user said "just go," explicit labeled assumptions.
+2. Reference principles from the Inspiration Ledger informing the design, or an explicit "reference-free" statement.
+3. A chosen direction (§5) with its project-specific hook — chosen by the user for open-ended work, or stated with rationale under immediate execution.
+4. A short build plan: sections in order and why, which catalog components (and any inline extensions), and the token choices (`--radius`, palette logic, font roles) expressing the direction.
+
+If the user demands immediate execution, compress steps 1–4 into one compact plan block and then build. Never respond to a design request with code as the first move.
+
 Follow `prototype_rules.md` exactly. Core invariants:
 
 - One self-contained SPA HTML file per prototype. Tailwind Play CDN. Minimal vanilla JS. Semantic HTML. Responsive 1440/390. WCAG 2.2 AA intent.

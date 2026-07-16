@@ -6,6 +6,8 @@ The deliverable is **a self-contained responsive HTML prototype using Tailwind P
 
 For new concepts and open-ended work, the user normally chooses one of the presented design directions before a full prototype is built (direction workflow: `design_agent_instructions.md` §5); skip the choice step only when the user requests immediate execution.
 
+**Prerequisite:** the pre-prototype gate in `design_agent_instructions.md` §6 must be satisfied first — brief, reference principles (or reference-free statement), chosen direction with hook, and a short build plan, all stated in chat before any code. A prototype produced without that plan fails review regardless of quality.
+
 - **Tailwind CSS via the Play CDN** in `<head>`:
   `<script src="https://cdn.tailwindcss.com"></script>`
   followed by the **mandatory token boilerplate** from `component_catalog.md` §1: the inline `tailwind.config` mapping and the `:root` CSS-variable block (shadcn-inspired `--background`, `--primary`, `--radius`, font variables, optional `.dark` overrides). All component styling goes through these tokens; a design direction is expressed by editing the `:root` block, never by hardcoding palette classes.
