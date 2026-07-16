@@ -282,7 +282,7 @@ Single closing action: `<h2>` + one `button:default` (`lg`), concrete verb, opti
 
 ## 4. JS conventions
 
-One `<script>` at end of `<body>`, IIFE, behaviors keyed by `data-*`, every query null-checked, no globals beyond optional `motif`, zero console errors, no eval/external requests. Budget: nav toggle, tabs, dialog, accordion single-open, switch/theme toggle, simple in-page filter/sort.
+One `<script>` at end of `<body>`, IIFE, behaviors keyed by `data-*`, every query null-checked, no globals beyond optional `motif`, zero console errors, no eval/external requests. Baseline behaviors: nav toggle, tabs, dialog, accordion single-open, switch/theme toggle, in-page filter/sort. Richer hand-written interactions (mini product demos, command palettes, carousels, drag-to-reorder, canvas/SVG visualizations, scroll-driven reveals) are encouraged when they serve the brief — see `prototype_rules.md` §6 for the guardrails (keyboard operability, reduced-motion, no external libraries).
 
 ## 5. Good/bad usage
 

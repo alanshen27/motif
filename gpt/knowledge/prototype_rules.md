@@ -11,8 +11,9 @@ For new concepts and open-ended work, the user normally chooses one of the prese
 - **Tailwind CSS via the Play CDN** in `<head>`:
   `<script src="https://cdn.tailwindcss.com"></script>`
   followed by the **mandatory token boilerplate** from `component_catalog.md` §1: the inline `tailwind.config` mapping and the `:root` CSS-variable block (shadcn-inspired `--background`, `--primary`, `--radius`, font variables, optional `.dark` overrides). All component styling goes through these tokens; a design direction is expressed by editing the `:root` block, never by hardcoding palette classes.
-- **Minimal vanilla JavaScript** in ONE `<script>` at the end of `<body>`. No frameworks, no npm, no module imports, no external JS besides the Tailwind CDN.
+- **Hand-written vanilla JavaScript** in ONE `<script>` at the end of `<body>` — as much as the experience needs, within the §6 guardrails. No frameworks, no npm, no module imports, no external JS besides the Tailwind CDN and the Lucide icon CDN below.
 - Fonts: system stack by default; Google Fonts `<link>` allowed when typography is central to the direction (max 2 families).
+- **Icons: Lucide by default.** Load `<script src="https://unpkg.com/lucide@latest"></script>` in `<head>` and use `<i data-lucide="icon-name"></i>` elements; call `lucide.createIcons()` once at the top of the single script block. Rules: decorative icons get `aria-hidden="true"`; an icon that carries meaning gets a text label or `sr-only` text next to it (never icon-only controls without a label); size/color through Tailwind classes on the element (`class="h-4 w-4"`, inherits `currentColor`); use only real Lucide icon names — if unsure an icon exists, choose a common one (`arrow-right`, `check`, `x`, `menu`, `search`, `plus`, `chevron-down`, `external-link`). Hand-drawn inline SVG remains fine for bespoke visual devices; never use emoji as UI icons.
 - Images: inline SVG, CSS-drawn shapes, or clearly labeled placeholder blocks. **Never** hotlink third-party/reference images or use unverified stock URLs.
 - Deliver as a downloadable file when the environment can create files; otherwise one complete fenced code block. Never emit fragments.
 
@@ -75,9 +76,9 @@ And say in chat: "This uses the Tailwind Play CDN and is prototype-only; the com
 
 - Vanilla only, one script block, wrapped in an IIFE or `DOMContentLoaded` handler; no globals except an optional `motif` namespace.
 - Behaviors bound via `data-*` attributes; every query null-checked so partial pages don't throw.
-- **Zero console errors.** No `console.log` left in. No `eval`, no dynamic script injection, no external requests.
+- **Zero console errors.** No `console.log` left in. No `eval`, no dynamic script injection, no external requests (fetching remote data, analytics, etc.).
 - Prototype forms `preventDefault()` and show an inline confirmation.
-- Allowed behavior budget: nav toggle, tabs, dialog, accordion single-open, theme toggle, simple filtering/sorting of in-page data, scroll-spy. Anything heavier belongs in a real build, not a prototype.
+- **Behavior budget — interactive is encouraged, dependencies are not.** Baseline behaviors (nav toggle, tabs, dialog, accordion, theme toggle, filtering/sorting, scroll-spy) are always fine. Richer interactions are welcome when they serve the brief — especially when they express the direction's hook or demonstrate actual use (T7a/T11a): working mini-demos of the product concept with realistic in-page data, command palettes, carousels/galleries with keyboard support, drag-to-reorder, inline canvas/SVG visualizations, scroll-driven reveals, multi-step flows, `localStorage` demo state. Guardrails: everything hand-written vanilla JS in the single script block (no external libraries beyond Tailwind + Lucide); every interaction keyboard-operable with visible focus; respect `prefers-reduced-motion`; the page must still make sense if JS fails; don't let an interaction gimmick substitute for information architecture.
 
 ## 7. Content rules
 
