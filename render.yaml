@@ -1,0 +1,22 @@
+# Render blueprint: deploy as a standard Node web service (long-lived process,
+# so src/server.js with app.listen is used directly — no serverless entry).
+services:
+  - type: web
+    name: motif-action-server
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    healthCheckPath: /healthz
+    envVars:
+      # The debug UI lists every session without auth — keep it off publicly.
+      - key: MOTIF_DEBUG_UI
+        value: "0"
+      # Render's filesystem is ephemeral: without Supabase, sessions vanish on
+      # every deploy/restart. Set these in the dashboard (sync: false = secret).
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: MOTIF_INSPO_PROVIDER
+        value: arena

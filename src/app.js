@@ -89,7 +89,7 @@ export function createApp({ store, dataRoot }) {
     })
   );
 
-  app.get("/healthz", (_req, res) => res.json({ ok: true }));
+  app.get("/health", (_req, res) => res.json({ ok: true }));
 
   // ------------------------------------------------------------ sessions
 

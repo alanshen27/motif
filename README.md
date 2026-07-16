@@ -38,6 +38,18 @@ npm start
   only; it has no auth. Disable with `MOTIF_DEBUG_UI=0` before deploying.
 - **Port:** override with `PORT`. File-backend data dir: `MOTIF_DATA_DIR`.
 
+## Deploy (Render)
+
+`render.yaml` is a ready blueprint: in Render choose **New → Blueprint**, point
+it at this repo, and it creates a Node web service running `src/server.js`
+(health check on `/healthz`, debug UI disabled). Then set `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` in the service's Environment tab — Render's disk is
+ephemeral, so without Supabase, sessions are lost on every deploy/restart.
+
+Note: free-tier services spin down when idle and take ~30–60 s to cold-start.
+If a GPT Action times out on the first call after idling, retry — or ping
+`/healthz` before demos.
+
 ## Deploy (Vercel)
 
 The repo is Vercel-ready: `api/index.js` exports the Express app as a
